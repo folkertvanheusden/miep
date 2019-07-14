@@ -1461,6 +1461,50 @@ void test_LB()
 	free_system(mb, m1, m2, m3, p);
 }
 
+void test_LBU()
+{
+	dolog(" + test_LBU");
+	memory_bus *mb = NULL;
+	memory *m1 = NULL, *m2 = NULL, *m3 = NULL;
+	processor *p = NULL;
+	create_system(&mb, &m1, &m2, &m3, &p);
+
+	{
+		p -> reset();
+		p -> set_PC(0);
+
+		uint8_t base = 1;
+		uint64_t base_val = 0x1234;
+		p -> set_register_32b(base, base_val);
+
+		uint8_t rt = 2;
+		uint64_t rt_val = TEST_VAL_2;
+		p -> set_register_32b(rt, rt_val);
+
+		int16_t offset = 0x0876;
+
+		uint8_t function = 0b100100;	// LBU
+
+		uint32_t instr = make_cmd_I_TYPE(base, rt, function, offset);
+		m1 -> write_32b(0, instr);
+		// printf("instruction: %08x\n", instr);
+
+		uint8_t addr_val = 0x80;
+		uint64_t addr = base_val + offset;
+		m1 -> write_8b(addr, addr_val);
+
+		tick(p);
+
+		uint32_t temp_32b = p -> get_register_32b_unsigned(rt);
+
+		uint32_t expected = addr_val;
+		if (temp_32b != expected)
+			error_exit("LBU: rt (%08x) != %08x", temp_32b, expected);
+	}
+
+	free_system(mb, m1, m2, m3, p);
+}
+
 void test_J_JAL(bool is_JAL)
 {
 	dolog(" + test_J");
@@ -1555,6 +1599,7 @@ int main(int argc, char *argv[])
 	test_J_JAL(false);
 	test_J_JAL(true);
 	test_LB();
+	test_LBU();
 	test_LUI();
 	test_LW();
 	test_NOP();
