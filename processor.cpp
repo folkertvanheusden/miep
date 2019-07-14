@@ -26,7 +26,7 @@ void processor::reset()
 {
 	memset(registers, 0x00, sizeof registers);
 
-	status_register = HI = LO = PC = EPC = 0;
+	status_register = HI = LO = PC = 0;
 
 	memset(C0_registers, 0x00, sizeof C0_registers);
 	memset(C1_registers, 0x00, sizeof C1_registers);
@@ -98,11 +98,11 @@ void processor::tick()
 		if (IS_BIT_OFF0_SET(8 + pe.get_ip(), status_register) && (status_register & 1) == 1)
 		{
 			status_register = (status_register & 0xFFFFFFC0) | ((status_register & 15) << 2);
-			EPC = pe.get_EPC();
+			set_C0_register(14, 0, pe.get_EPC());
+			set_C0_register(13, 0, pe.get_cause());
+			set_C0_register(8, 0, pe.get_BadVAddr());
+			set_C0_register(12, 0, pe.get_status());
 			PC = 0x80000080;
-
-			// FIXME: at return, shift >> 2, do not change old state
-			// ALSO INCREASE PC WITH 4
 		}
 	}
 }

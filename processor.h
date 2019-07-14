@@ -31,7 +31,7 @@ private:
 	// 29		$sp		stack pointer Points to last location on the stack.
 	// 30		$s8/$fp		saved value / frame pointer Preserved across procedure calls
 	// 31		$ra		return address
-	uint64_t registers[32], PC, HI, LO, EPC;
+	uint64_t registers[32], PC, HI, LO;
 	uint32_t status_register;
 	uint32_t C0_registers[32]; // COP0
 	uint64_t C1_registers[32]; // FP, COP1
