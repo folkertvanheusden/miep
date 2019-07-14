@@ -322,6 +322,8 @@ void mc::write_32b(uint64_t offset, uint32_t data)
 		pdc -> dc_log(" DMA_COUNT:   %llx", DMA_COUNT);
 		pdc -> dc_log(" DMA_GIO_ADR: %llx", DMA_GIO_ADR);
 		pdc -> dc_log(" DMA_STDMA:   %llx", DMA_STDMA);
+
+		// if Xlate in GIO_CTL is set, then use 31 bit DMA_MEMADDR
 	}
 	else if (offset == 0x2030) {
 		DMA_MODE = data;
