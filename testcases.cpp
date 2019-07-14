@@ -908,6 +908,49 @@ void test_ADDIU()
 	free_system(mb, m1, m2, m3, p);
 }
 
+void test_ADDU()
+{
+	dolog(" + test_ADDU");
+	memory_bus *mb = NULL;
+	memory *m1 = NULL, *m2 = NULL, *m3 = NULL;
+	processor *p = NULL;
+	create_system(&mb, &m1, &m2, &m3, &p);
+
+	p -> reset();
+	p -> set_PC(0);
+
+	uint64_t rt_val = 0xccccdddd;
+	uint8_t rt = 1;
+	p -> set_register_32b(rt, rt_val);
+
+	uint64_t rs_val = 0xaaaabbbb;
+	uint8_t rs = 9;
+	p -> set_register_32b(rs, rs_val);
+
+	uint8_t rd = 4;
+
+	uint32_t expected = rt_val + rs_val;
+
+	uint8_t function = 0x20;
+	uint32_t instruction = make_cmd_R_TYPE(0, 0, rd, rt, rs, 0b100001);
+
+	m1 -> write_32b(0, instruction);
+
+	tick(p);
+
+	uint64_t result = p -> get_register_32b_unsigned(rd);
+	if (result != expected)
+		error_exit("ADDU: result is %08x, expected %08x", result, expected);
+
+	if (p -> get_PC() != 4)
+		error_exit("ADDU: expected PC to be 0x4, is %08x\n", p -> get_PC());
+
+	if (p -> get_SR())
+		error_exit("ADDU: expected SR not to change, is %08x\n", p -> get_SR());
+
+	free_system(mb, m1, m2, m3, p);
+}
+
 void test_AND()
 {
 	dolog(" + test_AND");
@@ -1498,6 +1541,7 @@ int main(int argc, char *argv[])
 
 	test_ADDI();
 	test_ADDIU();
+	test_ADDU();
 	test_AND();
 	test_ANDI();
 	test_Bxx("BEQ", 0x04, 1, 2, 0x1234, 0x1234, 0x1000, 0x2000, false);
