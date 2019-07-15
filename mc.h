@@ -31,7 +31,8 @@ private:
 	uint32_t DMA_GIO_ADR;
 	uint32_t DMA_STDMA;
 	vdma_state_t vdma_state;
-	void set_dma_default();
+	void set_vdma_default();
+	void perform_vdma_transfer();
 
 public:
 	mc(processor *const pp, debug_console *pdc_in);
