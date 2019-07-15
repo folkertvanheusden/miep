@@ -200,7 +200,7 @@ void mc::read_32b(uint64_t offset, uint32_t *data)
 	}
 }
 
-void mc::set_dma_default()
+void mc::set_vdma_default()
 {
 	pdc -> dc_log("MC set VDMA defaults");
 
@@ -209,6 +209,53 @@ void mc::set_dma_default()
 	DMA_MODE = 0xd0;
 	DMA_COUNT = 0x10001;
 }
+
+#if 0
+void mc::perform_vdma_transfer()
+{
+       uint32_t linecount;
+       uint32_t zoomcount;
+       uint32_t bytecount;
+       uint32_t memory_addr;
+       uint32_t memory_vaddr;
+       const uint32_t linewidth;
+       const uint32_t linezoom;
+       const uint32_t stride;
+       bool dir_up;
+
+       while(linecount > 0) {
+               linecount--;
+
+               while(zoomcount > 0) {
+                       zoomcount--;
+
+                       while(bytecount > 0) {
+                               bytecount--;
+
+                               //transfer(gio_addr, memory_addr, mode, fill);
+
+                               if (dir_up)
+                                       memory_vaddr++;
+                               else
+                                       memory_vaddr--;
+
+                               bytecount = linewidth;
+                       }
+
+                       if (zoomcount > 0) {
+                               if (dir_up)
+                                       memory_vaddr -= linewidth;
+                               else
+                                       memory_vaddr += linewidth;
+                       }
+               }
+
+               zoomcount = linezoom;
+
+               memory_vaddr += stride;
+       }
+}
+#endif
 
 void mc::write_32b(uint64_t offset, uint32_t data)
 {
@@ -278,7 +325,7 @@ void mc::write_32b(uint64_t offset, uint32_t data)
 
 		if (offset == 0x2008) {
 			pdc -> dc_log("MC write DMA_MEMADRD %x", data);
-			set_dma_default();
+			set_vdma_default();
 		}
 		else {
 			pdc -> dc_log("MC write DMA_MEMADR %x", data);
@@ -309,7 +356,7 @@ void mc::write_32b(uint64_t offset, uint32_t data)
 			DMA_STDMA = data;
 
 		if (offset == 0x2070)
-			set_dma_default();
+			set_vdma_default();
 
 		vdma_state = vdma_running;
 		// FIXME start DMA
