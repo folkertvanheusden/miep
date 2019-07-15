@@ -13,11 +13,8 @@
 // 0x1fbd8000 0x1fbdffff PBUS device registers
 // 0x1fbe0000 0x1fbfffff Battery backed sram address space
 
-hpc3::hpc3(debug_console *pdc_in, std::string sram) : pdc(pdc_in)
+hpc3::hpc3(debug_console *pdc_in, std::string sram) : memory(512 * 1024, true), pdc(pdc_in)
 {
-	len = 512 * 1024;
-	pm = (unsigned char *)malloc(len);
-
 	sections_read[0] = &hpc3::section_8_read_pbus_dma;
 	sections_read[1] = &hpc3::section_9_read_hd_enet_channel;
 	sections_read[2] = &hpc3::section_a_read_fifo;
@@ -53,172 +50,176 @@ hpc3::~hpc3()
 	delete pep;
 }
 
-void hpc3::read_64b(uint64_t offset, uint64_t *data)
+void hpc3::read_64b(uint64_t real_addr, uint64_t offset, uint64_t *data)
 {
 	uint8_t section = ((offset >> 16) & 0x0f) - 0x08;
 
-	DEBUG(pdc -> dc_log("HPC3 read64 %016llx %d", offset, section));
+	DEBUG(pdc -> dc_log("HPC3 read64 %016llx (%016llx) %d", offset, real_addr, section));
 
-	(((hpc3*)this)->*hpc3::sections_read[section])(S_DWORD, offset & 0xffff, data);
+	(((hpc3*)this)->*hpc3::sections_read[section])(S_DWORD, real_addr, offset & 0xffff, data);
 }
 
-void hpc3::write_64b(uint64_t offset, uint64_t data)
+void hpc3::write_64b(uint64_t real_addr, uint64_t offset, uint64_t data)
 {
 	uint8_t section = ((offset >> 16) & 0x0f) - 0x08;
 
-	DEBUG(pdc -> dc_log("HPC3 write64 %016llx %d: %016llx", offset, section, data));
+	DEBUG(pdc -> dc_log("HPC3 write64 %016llx (%016llx) %d: %016llx", offset, real_addr, section, data));
 
-	(((hpc3*)this)->*hpc3::sections_write[section])(S_DWORD, offset & 0xffff, data);
+	(((hpc3*)this)->*hpc3::sections_write[section])(S_DWORD, real_addr, offset & 0xffff, data);
 }
 
-void hpc3::read_32b(uint64_t offset, uint32_t *data)
+void hpc3::read_32b(uint64_t real_addr, uint64_t offset, uint32_t *data)
 {
 	uint8_t section = ((offset >> 16) & 0x0f) - 0x08;
 
-	DEBUG(pdc -> dc_log("HPC3 read32 %016llx %d", offset, section));
+	DEBUG(pdc -> dc_log("HPC3 read32 %016llx (%016llx) %d", offset, real_addr, section));
 
 	uint64_t temp = -1;
-	(((hpc3*)this)->*hpc3::sections_read[section])(S_WORD, offset & 0xffff, &temp);
+	(((hpc3*)this)->*hpc3::sections_read[section])(S_WORD, real_addr, offset & 0xffff, &temp);
 	*data = temp;
 }
 
-void hpc3::write_32b(uint64_t offset, uint32_t data)
+void hpc3::write_32b(uint64_t real_addr, uint64_t offset, uint32_t data)
 {
 	uint8_t section = ((offset >> 16) & 0x0f) - 0x08;
 
-	DEBUG(pdc -> dc_log("HPC3 write32 %016llx %d: %08x", offset, section, data));
+	DEBUG(pdc -> dc_log("HPC3 write32 %016llx (%016llx) %d: %08x", offset, real_addr, section, data));
 
-	(((hpc3*)this)->*hpc3::sections_write[section])(S_WORD, offset & 0xffff, data);
+	(((hpc3*)this)->*hpc3::sections_write[section])(S_WORD, real_addr, offset & 0xffff, data);
 }
 
-void hpc3::read_16b(uint64_t offset, uint16_t *data)
+void hpc3::read_16b(uint64_t real_addr, uint64_t offset, uint16_t *data)
 {
 	uint8_t section = ((offset >> 16) & 0x0f) - 0x08;
 
-	DEBUG(pdc -> dc_log("HPC3 read16 %016llx %d", offset, section));
+	DEBUG(pdc -> dc_log("HPC3 read16 %016llx (%016llx) %d", offset, real_addr, section));
 
 	uint64_t temp = -1;
-	(((hpc3*)this)->*hpc3::sections_read[section])(S_SHORT, offset & 0xffff, &temp);
+	(((hpc3*)this)->*hpc3::sections_read[section])(S_SHORT, real_addr, offset & 0xffff, &temp);
 	*data = temp;
 }
 
-void hpc3::write_16b(uint64_t offset, uint16_t data)
+void hpc3::write_16b(uint64_t real_addr, uint64_t offset, uint16_t data)
 {
 	uint8_t section = ((offset >> 16) & 0x0f) - 0x08;
 
-	DEBUG(pdc -> dc_log("HPC3 write16 %016llx %d: %04x", offset, section, data));
+	DEBUG(pdc -> dc_log("HPC3 write16 %016llx (%016llx) %d: %04x", offset, real_addr, section, data));
 
-	(((hpc3*)this)->*hpc3::sections_write[section])(S_SHORT, offset & 0xffff, data);
+	(((hpc3*)this)->*hpc3::sections_write[section])(S_SHORT, real_addr, offset & 0xffff, data);
 }
 
-void hpc3::read_8b(uint64_t offset, uint8_t *data)
+void hpc3::read_8b(uint64_t real_addr, uint64_t offset, uint8_t *data)
 {
 	uint8_t section = ((offset >> 16) & 0x0f) - 0x08;
 
-	DEBUG(pdc -> dc_log("HPC3 read8 %016llx %d", offset & 0xffff, section));
+	DEBUG(pdc -> dc_log("HPC3 read8 %016llx (%016llx) %d", offset & 0xffff, real_addr, section));
 
 	uint64_t temp = -1;
-	(((hpc3*)this)->*hpc3::sections_read[section])(S_BYTE, offset & 0xffff, &temp);
+	(((hpc3*)this)->*hpc3::sections_read[section])(S_BYTE, real_addr, offset & 0xffff, &temp);
 	*data = temp;
 
 	DEBUG(pdc -> dc_log(" result: %02x", *data));
 }
 
-void hpc3::write_8b(uint64_t offset, uint8_t data)
+void hpc3::write_8b(uint64_t real_addr, uint64_t offset, uint8_t data)
 {
 	uint8_t section = ((offset >> 16) & 0x0f) - 0x08;
 
-	DEBUG(pdc -> dc_log("HPC3 write8 %016llx %d: %02x", offset, section, data));
+	DEBUG(pdc -> dc_log("HPC3 write8 %016llx (%016llx) %d: %02x", offset, real_addr, section, data));
 
-	(((hpc3*)this)->*hpc3::sections_write[section])(S_BYTE, offset & 0xffff, data);
+	(((hpc3*)this)->*hpc3::sections_write[section])(S_BYTE, real_addr, offset & 0xffff, data);
 }
 
-void hpc3::write_fake(ws_t ws, uint64_t offset, uint64_t data)
+void hpc3::write_fake(ws_t ws, uint64_t real_addr, uint64_t offset, uint64_t data)
 {
 	if (ws == S_BYTE)
 	{
-		memory::write_8b(offset, uint8_t(data));
+		memory::write_8b(real_addr, offset, uint8_t(data));
 	}
 	else if (ws == S_SHORT)
 	{
-		memory::write_16b(offset, uint16_t(data));
+		memory::write_16b(real_addr, offset, uint16_t(data));
 	}
 	else if (ws == S_WORD)
 	{
-		memory::write_32b(offset, uint32_t(data));
+		memory::write_32b(real_addr, offset, uint32_t(data));
 	}
 	else if (ws == S_DWORD)
 	{
-		memory::write_64b(offset, data);
+		memory::write_64b(real_addr, offset, data);
 	}
 }
 
-void hpc3::read_fake(ws_t ws, uint64_t offset, uint64_t *data)
+void hpc3::read_fake(ws_t ws, uint64_t real_addr, uint64_t offset, uint64_t *data)
 {
 	if (ws == S_BYTE)
 	{
 		uint8_t dummy;
-		memory::read_8b(offset, &dummy);
+		memory::read_8b(real_addr, offset, &dummy);
 		*data = dummy;
 	}
 	else if (ws == S_SHORT)
 	{
 		uint16_t dummy;
-		memory::read_16b(offset, &dummy);
+		memory::read_16b(real_addr, offset, &dummy);
 		*data = dummy;
 	}
 	else if (ws == S_WORD)
 	{
 		uint32_t dummy;
-		memory::read_32b(offset, &dummy);
+		memory::read_32b(real_addr, offset, &dummy);
 		*data = dummy;
 	}
 	else if (ws == S_DWORD)
 	{
-		memory::read_64b(offset, data);
+		memory::read_64b(real_addr, offset, data);
 	}
 }
 
-void hpc3::section_8_read_pbus_dma(ws_t ws, uint64_t offset, uint64_t *data)
+void hpc3::section_8_read_pbus_dma(ws_t ws, uint64_t real_addr, uint64_t offset, uint64_t *data)
 {
 	pdc -> dc_log("HPC3 PBUS read not implemented %016llx", offset);
-	read_fake(ws, offset, data);
+	read_fake(ws, real_addr, offset, data);
 }
 
-void hpc3::section_9_read_hd_enet_channel(ws_t ws, uint64_t offset, uint64_t *data)
+void hpc3::section_9_read_hd_enet_channel(ws_t ws, uint64_t real_addr, uint64_t offset, uint64_t *data)
 {
 	pdc -> dc_log("HPC3 HD ENET read not implemented %016llx", offset);
 	uint32_t dummy = -1;
-	seeq -> read_32b(offset, &dummy);
+	seeq -> read_32b(real_addr, offset, &dummy);
 	*data = dummy;
 }
 
-void hpc3::section_a_read_fifo(ws_t ws, uint64_t offset, uint64_t *data)
+void hpc3::section_a_read_fifo(ws_t ws, uint64_t real_addr, uint64_t offset, uint64_t *data)
 {
 	pdc -> dc_log("HPC3 FIFO read not implemented %016llx", offset);
-	read_fake(ws, offset, data);
+	read_fake(ws, real_addr, offset, data);
 }
 
-void hpc3::section_b_read_general(ws_t ws, uint64_t offset, uint64_t *data)
+void hpc3::section_b_read_general(ws_t ws, uint64_t real_addr, uint64_t offset, uint64_t *data)
 {
-	if (offset == 0x0004)	// gio.misc, gio64 bus, misc
+	if (offset == 0x0000)	// intstat
+		*data = 0x00; // interrupt status PBUS bits 4:0 // see page 37 hpc3.pdf, bug
+	else if (offset == 0x000c)	// intstat
+		*data = 0x00; // interrupt status PBUS bits 9:5 // see page 37 hpc3.pdf, bug
+	else if (offset == 0x0004)	// gio.misc, gio64 bus, misc
 		*data = gio_misc;	// bit 1: des_endian (1=little), bit 0: en_real_time
 	else
 	{
 		pdc -> dc_log("HPC3 GENERAL read not implemented %016llx", offset);
-		read_fake(ws, offset, data);
+		read_fake(ws, real_addr, offset, data);
 	}
 }
 
-void hpc3::section_c_read_hd_dev_regs(ws_t ws, uint64_t offset, uint64_t *data)
+void hpc3::section_c_read_hd_dev_regs(ws_t ws, uint64_t real_addr, uint64_t offset, uint64_t *data)
 {
 	pdc -> dc_log("HPC3 HD DEV read not implemented %016llx", offset);
-	read_fake(ws, offset, data);
+	read_fake(ws, real_addr, offset, data);
 }
 
-void hpc3::section_d_read_enet_pbus_dev_regs(ws_t ws, uint64_t offset, uint64_t *data)
+void hpc3::section_d_read_enet_pbus_dev_regs(ws_t ws, uint64_t real_addr, uint64_t offset, uint64_t *data)
 {
-	read_fake(ws, offset, data);
+	read_fake(ws, real_addr, offset, data);
 
 	if (offset >= 0x8000)
 	{
@@ -239,52 +240,52 @@ void hpc3::section_d_read_enet_pbus_dev_regs(ws_t ws, uint64_t offset, uint64_t 
 	}
 }
 
-void hpc3::section_e_read_sram(ws_t ws, uint64_t offset, uint64_t *data)
+void hpc3::section_e_read_sram(ws_t ws, uint64_t real_addr, uint64_t offset, uint64_t *data)
 {
 	uint32_t temp = -1;
-	pep -> read_32b(offset, &temp);
+	pep -> read_32b(real_addr, offset, &temp);
 	*data = temp;
 
-	DEBUG(pdc -> dc_log("HPC3 SRAM read %016llx: %08lx", temp));
+	DEBUG(pdc -> dc_log("HPC3 SRAM read %016llx: %08lx", offset, temp));
 }
 
-void hpc3::section_8_write_pbus_dma(ws_t ws, uint64_t offset, uint64_t data)
+void hpc3::section_8_write_pbus_dma(ws_t ws, uint64_t real_addr, uint64_t offset, uint64_t data)
 {
-	pdc -> dc_log("HPC3 PBUS write not implemented %016llx", offset);
-	write_fake(ws, offset, data);
+	pdc -> dc_log("HPC3 PBUS write not implemented %016llx (%016llx)", offset, real_addr);
+	write_fake(ws, real_addr, offset, data);
 }
 
-void hpc3::section_9_write_hd_enet_channel(ws_t ws, uint64_t offset, uint64_t data)
+void hpc3::section_9_write_hd_enet_channel(ws_t ws, uint64_t real_addr, uint64_t offset, uint64_t data)
 {
 	pdc -> dc_log("HPC3 HD ENET write not implemented %016llx", offset);
-	seeq -> write_32b(offset, data);
+	seeq -> write_32b(real_addr, offset, data);
 }
 
-void hpc3::section_a_write_fifo(ws_t ws, uint64_t offset, uint64_t data)
+void hpc3::section_a_write_fifo(ws_t ws, uint64_t real_addr, uint64_t offset, uint64_t data)
 {
 	pdc -> dc_log("HPC3 FIFO write not implemented %016llx", offset);
-	write_fake(ws, offset, data);
+	write_fake(ws, real_addr, offset, data);
 }
 
-void hpc3::section_b_write_general(ws_t ws, uint64_t offset, uint64_t data)
+void hpc3::section_b_write_general(ws_t ws, uint64_t real_addr, uint64_t offset, uint64_t data)
 {
 	if (offset == 0x0004)	// gio.misc, gio64 bus, misc
 		gio_misc = data;
 	else
 	{
 		pdc -> dc_log("HPC3 GENERAL write not implemented %016llx", offset);
-		write_fake(ws, offset, data);
+		write_fake(ws, real_addr, offset, data);
 	}
 }
 
-void hpc3::section_c_write_hd_dev_regs(ws_t ws, uint64_t offset, uint64_t data)
+void hpc3::section_c_write_hd_dev_regs(ws_t ws, uint64_t real_addr, uint64_t offset, uint64_t data)
 {
 	pdc -> dc_log("HPC3 HD DEV write not implemented %016llx", offset);
 
-	write_fake(ws, offset, data);
+	write_fake(ws, real_addr, offset, data);
 }
 
-void hpc3::section_d_write_enet_pbus_dev_regs(ws_t ws, uint64_t offset, uint64_t data)
+void hpc3::section_d_write_enet_pbus_dev_regs(ws_t ws, uint64_t real_addr, uint64_t offset, uint64_t data)
 {
 	if (offset >= 0x8000)
 	{
@@ -298,20 +299,20 @@ void hpc3::section_d_write_enet_pbus_dev_regs(ws_t ws, uint64_t offset, uint64_t
 			ser2 -> ser_data_write(uint8_t(data));
 		else
 		{
-			pdc -> dc_log("HPC3 PBUS write %016llx: %016llx not implemented", offset, data);
-			write_fake(ws, offset, data);
+			pdc -> dc_log("HPC3 PBUS write %016llx (%016llx): %016llx not implemented", offset, real_addr, data);
+			write_fake(ws, real_addr, offset, data);
 		}
 	}
 	else
 	{
 		pdc -> dc_log("HPC3 ENET write %016llx: %016llx not implemented", offset, data);
-		write_fake(ws, offset, data);
+		write_fake(ws, real_addr, offset, data);
 	}
 }
 
-void hpc3::section_e_write_sram(ws_t ws, uint64_t offset, uint64_t data)
+void hpc3::section_e_write_sram(ws_t ws, uint64_t real_addr, uint64_t offset, uint64_t data)
 {
 	pdc -> dc_log("HPC3 SRAM write %016llx: %016llx", offset, data);
 
-	pep -> write_32b(offset, data);
+	pep -> write_32b(real_addr, offset, data);
 }

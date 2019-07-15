@@ -32,13 +32,12 @@ uint8_t count_leading_ones(uint8_t n_bits, uint64_t value)
 
 	uint64_t mask = 1ll << (n_bits - 1);
 
-	uint8_t nr = 0;
-	for(nr=0; nr<n_bits; nr++)
-	{
-		if (!(value & mask))
+	uint8_t nr = 255;
+	for(int i=n_bits-1; i>=0; i--) {
+		if ((value & (1ll << i)) == 0) {
+			nr = n_bits - 1 - i;
 			break;
-
-		value <<= 1;
+		}
 	}
 
 	return nr;
@@ -50,13 +49,12 @@ uint8_t count_leading_zeros(uint8_t n_bits, uint64_t value)
 
 	uint64_t mask = 1ll << (n_bits - 1);
 
-	uint8_t nr = 0;
-	for(nr=0; nr<n_bits; nr++)
-	{
-		if (value & mask)
+	uint8_t nr = 255;
+	for(int i=n_bits-1; i>=0; i--) {
+		if (value & (1ll << i)) {
+			nr = n_bits - 1 - i;
 			break;
-
-		value <<= 1;
+		}
 	}
 
 	return nr;

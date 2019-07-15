@@ -202,7 +202,7 @@ void debug_console::tick(processor *p)
 	std::string logline = p -> da_logline(instruction);
 	dolog(logline.c_str());
 
-	std::string decoded = p -> decode_to_text(instruction);
+	std::string decoded = p -> decode_to_text(p->get_PC(), instruction);
 
 #ifdef _DEBUG
 	unsigned int space = decoded.find(' ');
@@ -288,8 +288,6 @@ void debug_console::tick(processor *p)
 		else if (n_ticks >= 1000)
 			mvwprintw(win_regs, 11, 44, "cnt: %7.2fk", double(n_ticks) / 1000.0);
 		else
-			mvwprintw(win_regs, 11, 44, "cnt: %lld", n_ticks);
-
 			mvwprintw(win_regs, 11, 44, "cnt: %lld", n_ticks);
 
 		const memory_bus *pmb = p -> get_memory_bus();

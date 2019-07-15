@@ -86,7 +86,7 @@ std::string processor::da_logline(uint32_t instruction)
 	}
 
 	line += "\t> ";
-	line += decode_to_text(instruction);
+	line += decode_to_text(cur_PC, instruction);
 
 	if (exception.length())
 	{
@@ -172,7 +172,7 @@ const char * processor::reg_to_name(uint8_t reg)
 	return "??";
 }
 
-std::string processor::decode_to_text(uint32_t instruction)
+std::string processor::decode_to_text(uint64_t addr, uint32_t instruction)
 {
 	uint8_t opcode = get_opcode(instruction);
 
@@ -269,6 +269,7 @@ std::string processor::decode_to_text(uint32_t instruction)
 	{
 		int immediate = get_immediate(instruction);
 		int immediate_s = int16_t(immediate);
+		uint64_t jump_addr = addr + 4 + immediate_s * 4; // fails if the instruction is in a delay slot
 
 		uint8_t rd = get_RD(instruction);
 		uint8_t rs = get_RS(instruction);
@@ -279,13 +280,13 @@ std::string processor::decode_to_text(uint32_t instruction)
 			case 0x01:
 				return "BLTZ/BGEZ";
 			case 0x04:
-				return format("BEQ %s,%s,%d", reg_to_name(rs), reg_to_name(rt), immediate_s);
+				return format("BEQ %s,%s,%d >(%016llx)", reg_to_name(rs), reg_to_name(rt), immediate_s, jump_addr);
 			case 0x05:
-				return format("BNE %s,%s,%d", reg_to_name(rs), reg_to_name(rt), immediate_s);
+				return format("BNE %s,%s,%d >(%016llx)", reg_to_name(rs), reg_to_name(rt), immediate_s, jump_addr);
 			case 0x06:
-				return format("BLEZ %s,%d", reg_to_name(rs), immediate_s);
+				return format("BLEZ %s,%d >(%016llx)", reg_to_name(rs), immediate_s, jump_addr);
 			case 0x07:
-				return format("BGTZ %s,%d", reg_to_name(rs), immediate_s);
+				return format("BGTZ %s,%d >(%016llx)", reg_to_name(rs), immediate_s, jump_addr);
 			case 0x08:
 				return format("ADDI %s,%s,%d", reg_to_name(rt), reg_to_name(rs), immediate_s);
 			case 0x09:
@@ -368,7 +369,7 @@ std::string processor::decode_to_text(uint32_t instruction)
 						return "EI";
 					return "DI";
 				default:
-					return format("COP0_0/%02x", function);
+					return format("COP0_0/%02x (%08x)", function, instruction);
 			}
 		}
 	}

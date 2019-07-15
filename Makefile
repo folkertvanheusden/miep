@@ -13,7 +13,7 @@ PROFILING=0
 # enables logging in non '-d'-mode
 DEBUG=yes
 
-DEBUG_FLAGS=-g3
+DEBUG_FLAGS=-ggdb3
 ifeq ($(PROFILING),1)
 	DEBUG_FLAGS+=-D_PROFILING=1
 	DEBUG=no

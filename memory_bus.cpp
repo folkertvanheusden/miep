@@ -98,61 +98,61 @@ void memory_bus::read_64b(uint64_t offset, uint64_t *data)
 {
 	const memory_segment_t * segment = find_segment(offset);
 
-	segment -> target -> read_64b(offset - segment -> offset_start, data);
+	segment -> target -> read_64b(offset, offset - segment -> offset_start, data);
 }
 
 void memory_bus::write_64b(uint64_t offset, uint64_t data)
 {
 	const memory_segment_t * segment = find_segment(offset);
 
-	segment -> target -> write_64b(offset - segment -> offset_start, data);
+	segment -> target -> write_64b(offset, offset - segment -> offset_start, data);
 }
 
 void memory_bus::read_32b_i(uint64_t offset, uint32_t *data)
 {
 	const memory_segment_t * segment = find_segment_i(offset);
 
-	segment -> target -> read_32b(offset - segment -> offset_start, data);
+	segment -> target -> read_32b(offset, offset - segment -> offset_start, data);
 }
 
 void memory_bus::read_32b(uint64_t offset, uint32_t *data)
 {
 	const memory_segment_t * segment = find_segment(offset);
 
-	segment -> target -> read_32b(offset - segment -> offset_start, data);
+	segment -> target -> read_32b(offset, offset - segment -> offset_start, data);
 }
 
 void memory_bus::write_32b(uint64_t offset, uint32_t data)
 {
 	const memory_segment_t * segment = find_segment(offset);
 
-	segment -> target -> write_32b(offset - segment -> offset_start, data);
+	segment -> target -> write_32b(offset, offset - segment -> offset_start, data);
 }
 
 void memory_bus::read_16b(uint64_t offset, uint16_t *data)
 {
 	const memory_segment_t * segment = find_segment(offset);
 
-	segment -> target -> read_16b(offset - segment -> offset_start, data);
+	segment -> target -> read_16b(offset, offset - segment -> offset_start, data);
 }
 
 void memory_bus::write_16b(uint64_t offset, uint16_t data)
 {
 	const memory_segment_t * segment = find_segment(offset);
 
-	segment -> target -> write_16b(offset - segment -> offset_start, data);
+	segment -> target -> write_16b(offset, offset - segment -> offset_start, data);
 }
 
 void memory_bus::read_8b(uint64_t offset, uint8_t *data)
 {
 	const memory_segment_t * segment = find_segment(offset);
 
-	segment -> target -> read_8b(offset - segment -> offset_start, data);
+	segment -> target -> read_8b(offset, offset - segment -> offset_start, data);
 }
 
 void memory_bus::write_8b(uint64_t offset, uint8_t data)
 {
 	const memory_segment_t * segment = find_segment(offset);
 
-	segment -> target -> write_8b(offset - segment -> offset_start, data);
+	segment -> target -> write_8b(offset, offset - segment -> offset_start, data);
 }

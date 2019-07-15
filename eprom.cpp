@@ -38,7 +38,7 @@ eprom::eprom(std::string file, uint64_t size)
 		error_exit("cannot open file %s", file.c_str());
 
 	if (ftruncate(fd, size) == -1)
-		error_exit("cannot ftruncate(%lld) on file %s", file.c_str(), size);
+		error_exit("cannot ftruncate(%lld) on file %s", size, file.c_str());
 
 	len = size;
 

@@ -73,11 +73,13 @@ void processor::init_r_type()
 void processor::r_type_00(uint32_t instruction)	// NOP / SLL
 {
 	uint8_t sa = get_SA(instruction);
-	uint8_t rd = get_RD(instruction);
-	uint8_t rt = get_RT(instruction);
 
-	if (sa) // if sa==0 then NOP
+	if (sa) { // if sa==0 then NOP
+		uint8_t rd = get_RD(instruction);
+		uint8_t rt = get_RT(instruction);
+
 		set_register_32b_se(rd, get_register_32b_unsigned(rt) << sa);
+	}
 }
 
 void processor::r_type_01(uint32_t instruction)

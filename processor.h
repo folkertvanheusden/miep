@@ -13,6 +13,10 @@
 #define SR_EI 0			// status register "EI" bit
 #define SR_KERNEL_USER	1	// kernel/user mode
 
+typedef struct {
+	uint32_t ASID, VPN, PFN, Flags;
+} TLB_entry_t;
+
 class processor
 {
 private:
@@ -33,9 +37,11 @@ private:
 	// 31		$ra		return address
 	uint64_t registers[32], PC, HI, LO;
 	uint32_t status_register;
-	uint32_t C0_registers[32]; // COP0
+	uint32_t C0_registers[32][32]; // COP0
 	uint64_t C1_registers[32]; // FP, COP1
 	uint64_t C2_registers[32]; // COP2
+
+	TLB_entry_t tlb[96];
 
 	bool RMW_sequence;
 
@@ -225,7 +231,7 @@ public:
 	static inline uint8_t get_RT(uint32_t instruction) { return (instruction >> 16) & MASK_5B; }
 	static inline uint8_t get_RD(uint32_t instruction) { return (instruction >> 11) & MASK_5B; }
 	static inline uint8_t get_SA(uint32_t instruction) { return (instruction >>  6) & MASK_5B; }
-	static inline int32_t get_SB18(uint32_t instruction) { return int16_t(instruction) << 2; }
+	static inline int32_t get_SB18(uint32_t instruction) { return int16_t(instruction) * 4; }
 	static inline uint16_t get_immediate(uint32_t instruction) { return instruction; }
 	static inline uint8_t get_base(uint32_t instruction) { return (instruction >> 21) & MASK_5B; }
 	static inline uint8_t get_opcode(uint32_t instruction) { return (instruction >> 26) & MASK_6B; }
@@ -239,7 +245,7 @@ public:
 	}
 
 	static const char * reg_to_name(uint8_t reg);
-	static std::string decode_to_text(uint32_t instr);
+	static std::string decode_to_text(uint64_t addr, uint32_t instr);
 	std::string da_logline(uint32_t instr);
 
 	inline int32_t get_register_32b_signed(uint8_t nr) const

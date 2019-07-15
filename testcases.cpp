@@ -152,7 +152,7 @@ void test_count_leading()
 	if (rc != expected)
 		error_exit("count_leading_ones failed (1), expecting %d, got %d", expected, rc);
 
-	expected = 4;
+	expected = 255;
 	rc = count_leading_ones(4, value);
 	if (rc != expected)
 		error_exit("count_leading_ones failed (2), expecting %d, got %d", expected, rc);
@@ -301,10 +301,10 @@ void test_memory()
 	uint64_t address = 8;
 
 	uint8_t value_8b = 0x0f;
-	m1 -> write_8b(address, value_8b);
+	m1 -> write_8b(address, address, value_8b);
 
 	uint8_t temp_8b = -1;
-	m1 -> read_8b(address, &temp_8b);
+	m1 -> read_8b(address, address, &temp_8b);
 
 	if (temp_8b != value_8b)
 		error_exit("failed to verify data (8b)");
@@ -312,10 +312,10 @@ void test_memory()
 	address = 16;
 
 	uint16_t value_16b = 0x1234;
-	m1 -> write_16b(address, value_16b);
+	m1 -> write_16b(address, address, value_16b);
 
 	uint16_t temp_16b = -1;
-	m1 -> read_16b(address, &temp_16b);
+	m1 -> read_16b(address, address, &temp_16b);
 
 	if (temp_16b != value_16b)
 		error_exit("failed to verify data (16b)");
@@ -323,10 +323,10 @@ void test_memory()
 	address = 24;
 
 	uint32_t value_32b = 0x12345678;
-	m1 -> write_32b(address, value_32b);
+	m1 -> write_32b(address, address, value_32b);
 
 	uint32_t temp_32b = -1;
-	m1 -> read_32b(address, &temp_32b);
+	m1 -> read_32b(address, address, &temp_32b);
 
 	if (temp_32b != value_32b)
 		error_exit("failed to verify data (32b)");
@@ -334,10 +334,10 @@ void test_memory()
 	address = 32;
 
 	uint64_t value_64b = 0x1234567890abcdef;
-	m1 -> write_64b(address, value_64b);
+	m1 -> write_64b(address, address, value_64b);
 
 	uint64_t temp_64b = -1;
-	m1 -> read_64b(address, &temp_64b);
+	m1 -> read_64b(address, address, &temp_64b);
 
 	if (temp_64b != value_64b)
 		error_exit("failed to verify data (64b)");
@@ -511,12 +511,12 @@ void test_LW()
 		uint8_t function = 0x23;	// LW
 
 		uint32_t instr = make_cmd_I_TYPE(base, rt, function, offset);
-		m1 -> write_32b(0, instr);
+		m1 -> write_32b(0, 0, instr);
 		// printf("instruction: %08x\n", instr);
 
 		uint32_t addr_val = 0xdeafbeef;
 		uint64_t addr = base_val + offset;
-		m1 -> write_32b(addr, addr_val);
+		m1 -> write_32b(addr, addr, addr_val);
 
 		tick(p);
 
@@ -549,12 +549,12 @@ void test_LW()
 		uint32_t temp_32b = -1;
 
 		uint32_t instr = make_cmd_I_TYPE(base, rt, function, offset);
-		m1 -> write_32b(0, instr);
+		m1 -> write_32b(0, 0, instr);
 		// printf("instruction: %08x\n", instr);
 
 		uint32_t addr_val = 0xdeafbeef;
 		uint64_t addr = base_val + untwos_complement(offset, 16);
-		m1 -> write_32b(addr, addr_val);
+		m1 -> write_32b(addr, addr, addr_val);
 
 		tick(p);
 
@@ -593,7 +593,7 @@ void test_SLL()
 
 	uint8_t function = 0, extra = 0;
 	uint32_t instr = make_cmd_SPECIAL(rt, rd, sa, function, extra);
-	m1 -> write_32b(0, instr);
+	m1 -> write_32b(0, 0, instr);
 
 	tick(p);
 
@@ -636,7 +636,7 @@ void test_SRL()
 	uint32_t instr = make_cmd_SPECIAL(rt, rd, sa, function, extra);
 	// printf("instruction: %08x\n", instr);
 
-	m1 -> write_32b(0, instr);
+	m1 -> write_32b(0, 0, instr);
 
 	tick(p);
 
@@ -678,7 +678,7 @@ void test_LUI()
 	uint64_t expected = sign_extend_32b(immediate << 16);
 	uint32_t instr = make_cmd_I_TYPE(rs, rt, function, immediate);
 
-	m1 -> write_32b(0, instr);
+	m1 -> write_32b(0, 0, instr);
 
 	tick(p);
 
@@ -721,12 +721,12 @@ void test_SW()
 	uint8_t function = 0x2b;
 	uint32_t instruction = make_cmd_I_TYPE(rs, rt, function, immediate);
 
-	m1 -> write_32b(0, instruction);
+	m1 -> write_32b(0, 0, instruction);
 
 	tick(p);
 
 	uint32_t result_mem_val = -1;
-	m1 -> read_32b(final_address, &result_mem_val);
+	m1 -> read_32b(final_address, final_address, &result_mem_val);
 
 	if (result_mem_val != verify_val)
 		error_exit("SW: expected %08x, got %08x", verify_val, result_mem_val);
@@ -764,12 +764,12 @@ void test_SB()
 	uint8_t function = 0x28;
 	uint32_t instruction = make_cmd_I_TYPE(rs, rt, function, immediate);
 
-	m1 -> write_32b(0, instruction);
+	m1 -> write_32b(0, 0, instruction);
 
 	tick(p);
 
 	uint8_t result_mem_val = -1;
-	m1 -> read_8b(final_address, &result_mem_val);
+	m1 -> read_8b(final_address, final_address, &result_mem_val);
 
 	if (result_mem_val != verify_val)
 		error_exit("SW: expected %08x, got %08x", verify_val, result_mem_val);
@@ -807,7 +807,7 @@ void test_ORI()
 	uint8_t function = 0x0d;
 	uint32_t instruction = make_cmd_I_TYPE(rs, rt, function, immediate);
 
-	m1 -> write_32b(0, instruction);
+	m1 -> write_32b(0, 0, instruction);
 
 	tick(p);
 
@@ -846,7 +846,7 @@ void test_ANDI()
 	uint8_t function = 0x0c;
 	uint32_t instruction = make_cmd_I_TYPE(rs, rt, function, immediate);
 
-	m1 -> write_32b(0, instruction);
+	m1 -> write_32b(0, 0, instruction);
 
 	tick(p);
 
@@ -885,7 +885,7 @@ void test_XORI()
 	uint8_t function = 0x0e;
 	uint32_t instruction = make_cmd_I_TYPE(rs, rt, function, immediate);
 
-	m1 -> write_32b(0, instruction);
+	m1 -> write_32b(0, 0, instruction);
 
 	tick(p);
 
@@ -925,7 +925,7 @@ void test_ADDIU()
 	uint8_t function = 0x09;
 	uint32_t instruction = make_cmd_I_TYPE(rs, rt, function, immediate);
 
-	m1 -> write_32b(0, instruction);
+	m1 -> write_32b(0, 0, instruction);
 
 	tick(p);
 
@@ -964,7 +964,7 @@ void test_ADDU()
 	uint8_t function = 0x20;
 	uint32_t instruction = make_cmd_R_TYPE(0, 0, rd, rt, rs, 0b100001);
 
-	m1 -> write_32b(0, instruction);
+	m1 -> write_32b(0, 0, instruction);
 
 	tick(p);
 
@@ -1010,7 +1010,7 @@ void test_AND()
 	uint8_t function = 0x24, extra = rs;
 	uint32_t instruction = make_cmd_SPECIAL(rt, rd, sa, function, extra);
 
-	m1 -> write_32b(0, instruction);
+	m1 -> write_32b(0, 0, instruction);
 
 	tick(p);
 
@@ -1053,7 +1053,7 @@ void test_OR()
 	uint8_t function = 0x25, extra = rs;
 	uint32_t instruction = make_cmd_SPECIAL(rt, rd, sa, function, extra);
 
-	m1 -> write_32b(0, instruction);
+	m1 -> write_32b(0, 0, instruction);
 
 	tick(p);
 
@@ -1109,7 +1109,7 @@ void test_NOP()
 	uint8_t sa = 0, rd = 0, rt = 0, rs = 0;
 	uint32_t instruction = make_cmd_R_TYPE(opcode, sa, rd, rt, rs, function);
 
-	m1 -> write_32b(0, instruction);
+	m1 -> write_32b(0, 0, instruction);
 
 	tick(p);
 
@@ -1175,7 +1175,7 @@ void test_Bxx(std::string which, uint8_t function, uint8_t rs, uint8_t rt, uint6
 	uint16_t immediate = 0x128;
 
 	uint32_t instruction = make_cmd_I_TYPE(rs, rt, function, immediate);
-	m1 -> write_32b(0, instruction);
+	m1 -> write_32b(0, 0, instruction);
 
 	// If the branch is taken, the instruction in the delay slot is executed.
 	if (likely)
@@ -1190,7 +1190,7 @@ void test_Bxx(std::string which, uint8_t function, uint8_t rs, uint8_t rt, uint6
 		uint8_t a_function = 0x09;
 		uint32_t a_instruction = make_cmd_I_TYPE(likely_rs, likely_rt, a_function, 1234);
 
-		m1 -> write_32b(4, a_instruction);
+		m1 -> write_32b(4, 4, a_instruction);
 	}
 
 	tick(p);
@@ -1230,7 +1230,7 @@ void test_Bxx(std::string which, uint8_t function, uint8_t rs, uint8_t rt, uint6
 	immediate = -0x128;
 
 	instruction = make_cmd_I_TYPE(rs, rt, function, immediate);
-	m1 -> write_32b(0, instruction);
+	m1 -> write_32b(0, 0, instruction);
 
 	tick(p);
 
@@ -1257,7 +1257,7 @@ void test_Bxx(std::string which, uint8_t function, uint8_t rs, uint8_t rt, uint6
 	immediate = 0x128;
 
 	instruction = make_cmd_I_TYPE(rs, rt, function, immediate);
-	m1 -> write_32b(0, instruction);
+	m1 -> write_32b(0, 0, instruction);
 
 	tick(p);
 
@@ -1352,7 +1352,7 @@ void test_ADDI()
 	uint8_t function = 0x08;
 	uint32_t instruction = make_cmd_I_TYPE(rs, rt, function, immediate);
 
-	m1 -> write_32b(0, instruction);
+	m1 -> write_32b(0, 0, instruction);
 
 	tick(p);
 
@@ -1368,7 +1368,7 @@ void test_ADDI()
 	expected = rt_val;
 	immediate = 0x8000;
 	instruction = make_cmd_I_TYPE(rs, rt, function, immediate);
-	m1 -> write_32b(0, instruction);
+	m1 -> write_32b(0, 0, instruction);
 
 	tick(p);
 
@@ -1416,7 +1416,7 @@ void test_SLT()
 	uint8_t rd = 3;
 	uint32_t instruction = make_cmd_R_TYPE(opcode, sa, rd, rt, rs, function);
 
-	m1 -> write_32b(0, instruction);
+	m1 -> write_32b(0, 0, instruction);
 
 	tick(p);
 
@@ -1453,12 +1453,12 @@ void test_LB()
 		uint8_t function = 0x20;	// LB
 
 		uint32_t instr = make_cmd_I_TYPE(base, rt, function, offset);
-		m1 -> write_32b(0, instr);
+		m1 -> write_32b(0, 0, instr);
 		// printf("instruction: %08x\n", instr);
 
 		uint8_t addr_val = 0x1d;
 		uint64_t addr = base_val + offset;
-		m1 -> write_8b(addr, addr_val);
+		m1 -> write_8b(addr, addr, addr_val);
 
 		tick(p);
 
@@ -1491,12 +1491,12 @@ void test_LB()
 		uint32_t temp_32b = -1;
 
 		uint32_t instr = make_cmd_I_TYPE(base, rt, function, offset);
-		m1 -> write_32b(0, instr);
+		m1 -> write_32b(0, 0, instr);
 		// printf("instruction: %08x\n", instr);
 
 		uint8_t addr_val = 0x2c;
 		uint64_t addr = base_val + untwos_complement(offset, 16);
-		m1 -> write_8b(addr, addr_val);
+		m1 -> write_8b(addr, addr, addr_val);
 
 		tick(p);
 
@@ -1537,12 +1537,12 @@ void test_LBU()
 		uint8_t function = 0b100100;	// LBU
 
 		uint32_t instr = make_cmd_I_TYPE(base, rt, function, offset);
-		m1 -> write_32b(0, instr);
+		m1 -> write_32b(0, 0, instr);
 		// printf("instruction: %08x\n", instr);
 
 		uint8_t addr_val = 0x80;
 		uint64_t addr = base_val + offset;
-		m1 -> write_8b(addr, addr_val);
+		m1 -> write_8b(addr, addr, addr_val);
 
 		tick(p);
 
@@ -1572,7 +1572,7 @@ void test_J_JAL(bool is_JAL)
 	uint32_t offset_unshifted = 0x18;
 	uint32_t instruction = ((is_JAL ? 3 : 2) << 26) | offset_unshifted;
 
-	m1 -> write_32b(0, instruction);
+	m1 -> write_32b(0, 0, instruction);
 
 	tick(p);
 

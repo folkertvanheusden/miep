@@ -6,11 +6,8 @@
 #include "utils.h"
 #include "processor.h"
 
-mc::mc(processor *const ppIn, debug_console *pdc_in) : pp(ppIn), pdc(pdc_in)
+mc::mc(processor *const ppIn, debug_console *pdc_in) : memory(0xfffff, true), pp(ppIn), pdc(pdc_in)
 {
-	pm = NULL;
-	len = 0;
-
 	refresh_counter = 0;
 
 	sys_semaphore = 0;
@@ -78,7 +75,7 @@ mc::~mc()
 {
 }
 
-void mc::read_32b(uint64_t offset, uint32_t *data)
+void mc::read_32b(uint64_t real_addr, uint64_t offset, uint32_t *data)
 {
 	uint32_t index = offset / REGS_DIV;
 	if (index < 128)
@@ -86,12 +83,14 @@ void mc::read_32b(uint64_t offset, uint32_t *data)
 
 	offset &= ~4; // 0x0c -> 0x08
 
-	pdc -> dc_log("MC read from %016llx", offset);
+	pdc -> dc_log("MC read from %016llx (%016llx)", offset, real_addr);
 
 	if (offset <= 0x0f)	// CPUCTRL 0 & 1
 	{
 		pdc -> dc_log("MC CPUCTRL0/1 read (%08x)", *data);
 	}
+	else if (offset == 0x18)	// SYSID
+	       *data = 1; // revision B, no EISA bus	
 	else if (offset == 0x28)	// RPSS_DIVIDER 
 		*data = RPSS_DIVIDER;
 	else if (offset == 0x30)	// EEROM
@@ -257,11 +256,11 @@ void mc::perform_vdma_transfer()
 }
 #endif
 
-void mc::write_32b(uint64_t offset, uint32_t data)
+void mc::write_32b(uint64_t real_addr, uint64_t offset, uint32_t data)
 {
 	offset &= ~4; // 0x0c -> 0x08
 
-	pdc -> dc_log("MC write @ %016llx: %016llx", offset, data);
+	pdc -> dc_log("MC write @ %016llx (%016llx): %016llx", offset, real_addr, data);
 
 	if (offset <= 0x0f)	// CPUCTRL 0 & 1
 	{

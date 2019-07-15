@@ -9,6 +9,9 @@ void processor::COP0(uint32_t instruction)
 
 		switch(function)
 		{
+			case 0x02:	// TLBWI
+				// FIXME page 229 of  MIPS32 Architecture For Programmers Volume II, Revision 0.95
+				break;
 #if 0
 			case 0x18:	// ERET
 				PC = get_C0_register(14, 0);	// EPC (FIXME: sel 0?)
@@ -18,7 +21,7 @@ void processor::COP0(uint32_t instruction)
 #endif
 
 			default:
-				pdc -> dc_log("COP0: function %02x not implemented (1)", function);
+				pdc -> dc_log("COP0: function %02x not implemented (1 - %08x)", function, instruction);
 		}
 	}
 	else
