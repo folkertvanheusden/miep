@@ -44,7 +44,7 @@ void processor::tick()
 {
 	try
 	{
-		register uint32_t instruction;
+		uint32_t instruction;
 
 		try
 		{
@@ -79,7 +79,7 @@ void processor::tick()
 			throw pe;
 		}
 
-		register uint8_t opcode = get_opcode(instruction);
+		uint8_t opcode = get_opcode(instruction);
 
 		// the other methods are really i_types with the opcode set to a certain value
 		// well maybe not in the cpu but logically they are
