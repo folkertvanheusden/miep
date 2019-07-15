@@ -445,9 +445,9 @@ void processor::i_type_2e(uint32_t instruction)
 	pdc -> dc_log("i_type_2e not implemented");
 }
 
-void processor::i_type_2f(uint32_t instruction)
+void processor::i_type_2f(uint32_t instruction) // CACHE op, offset(base)
 {
-	pdc -> dc_log("i_type_2f not implemented");
+	//... ignored
 }
 
 void processor::i_type_31(uint32_t instruction)	// LWC1

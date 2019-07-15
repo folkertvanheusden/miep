@@ -85,7 +85,7 @@ std::string processor::da_logline(uint32_t instruction)
 		}
 	}
 
-	line += "\t";
+	line += "\t> ";
 	line += decode_to_text(instruction);
 
 	if (exception.length())
@@ -270,6 +270,7 @@ std::string processor::decode_to_text(uint32_t instruction)
 		int immediate = get_immediate(instruction);
 		int immediate_s = int16_t(immediate);
 
+		uint8_t rd = get_RD(instruction);
 		uint8_t rs = get_RS(instruction);
 		uint8_t rt = get_RT(instruction);
 
@@ -317,12 +318,14 @@ std::string processor::decode_to_text(uint32_t instruction)
 				return format("SH %d(%s), %s", immediate_s, reg_to_name(rs), reg_to_name(rt));
 			case 0x2b:
 				return format("SW %d(%s), %s", immediate_s, reg_to_name(rs), reg_to_name(rt));
+			case 0x2f:
+				return format("ADDU %s,%s,%s", reg_to_name(rd), reg_to_name(rs), reg_to_name(rt));
 			case 0x31:
 				return "LWCL";
 			case 0x39:
 				return "SWCL";
 			default:
-				return "I/???";
+				return format("I/???[%02x]", opcode);
 		}
 	}
 	else if (opcode == 16)	// COP0

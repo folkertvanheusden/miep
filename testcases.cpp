@@ -477,6 +477,14 @@ void test_sign_extend()
 		error_exit("sign_extend mismatch (%x / %x)", cmp, rc);
 }
 
+void test_no_exception(processor *const p)
+{
+	uint32_t sr = p-> get_SR();
+
+	if (sr)
+		error_exit("expected SR not to change, is %08x\n", sr);
+}
+
 void test_LW()
 {
 	dolog(" + test_LW");
@@ -517,6 +525,8 @@ void test_LW()
 		uint32_t expected = addr_val;
 		if (temp_32b != expected)
 			error_exit("LW: rt (%08x) != %08x", temp_32b, expected);
+
+		test_no_exception(p);
 	}
 
 	// signed offset
@@ -553,6 +563,8 @@ void test_LW()
 		uint32_t expected = addr_val;
 		if (temp_32b != expected)
 			error_exit("LW: rt (%016llx) != %016llx", temp_32b, expected);
+
+		test_no_exception(p);
 	}
 
 	free_system(mb, m1, m2, m3, p);
@@ -595,6 +607,8 @@ void test_SLL()
 	if (temp_64b != expected)
 		error_exit("SLL: rd (%016llx) != %016llx", temp_64b, expected);
 
+	test_no_exception(p);
+
 	free_system(mb, m1, m2, m3, p);
 }
 
@@ -635,6 +649,8 @@ void test_SRL()
 	if (temp_32b != expected)
 		error_exit("SRL: rd (%d) != %d", temp_32b, expected);
 
+	test_no_exception(p);
+
 	free_system(mb, m1, m2, m3, p);
 }
 
@@ -673,6 +689,8 @@ void test_LUI()
 	rc = p -> get_register_64b_unsigned(rs);
 	if (rc != rs_val)
 		error_exit("LUI failed: register %d changed from %016llx to %016llx", rs, rs_val, rc);
+
+	test_no_exception(p);
 
 	free_system(mb, m1, m2, m3, p);
 }
@@ -715,6 +733,8 @@ void test_SW()
 
 	// FIXME test that unaligned memory access causes a AddressError exception
 
+	test_no_exception(p);
+
 	free_system(mb, m1, m2, m3, p);
 }
 
@@ -756,6 +776,8 @@ void test_SB()
 
 	// FIXME VERIFY that other registers / memory is not affected
 
+	test_no_exception(p);
+
 	free_system(mb, m1, m2, m3, p);
 }
 
@@ -792,6 +814,8 @@ void test_ORI()
 	int result = p -> get_register_32b_signed(rt);
 	if (result != expected)
 		error_exit("ORI: result is %08x, expected %08x", result, expected);
+
+	test_no_exception(p);
 
 	free_system(mb, m1, m2, m3, p);
 }
@@ -830,6 +854,8 @@ void test_ANDI()
 	if (result != expected)
 		error_exit("ANDI: result is %08x, expected %08x", result, expected);
 
+	test_no_exception(p);
+
 	free_system(mb, m1, m2, m3, p);
 }
 
@@ -866,6 +892,8 @@ void test_XORI()
 	int result = p -> get_register_32b_signed(rt);
 	if (result != expected)
 		error_exit("ANDI: result is %08x, expected %08x", result, expected);
+
+	test_no_exception(p);
 
 	free_system(mb, m1, m2, m3, p);
 }
@@ -904,6 +932,50 @@ void test_ADDIU()
 	uint64_t result = p -> get_register_64b_signed(rt);
 	if (result != expected)
 		error_exit("ADDIU: result is %08x, expected %08x", result, expected);
+
+	test_no_exception(p);
+
+	free_system(mb, m1, m2, m3, p);
+}
+
+void test_ADDU()
+{
+	dolog(" + test_ADDU");
+	memory_bus *mb = NULL;
+	memory *m1 = NULL, *m2 = NULL, *m3 = NULL;
+	processor *p = NULL;
+	create_system(&mb, &m1, &m2, &m3, &p);
+
+	p -> reset();
+	p -> set_PC(0);
+
+	uint64_t rt_val = 0xccccdddd;
+	uint8_t rt = 1;
+	p -> set_register_32b(rt, rt_val);
+
+	uint64_t rs_val = 0xaaaabbbb;
+	uint8_t rs = 9;
+	p -> set_register_32b(rs, rs_val);
+
+	uint8_t rd = 4;
+
+	uint32_t expected = rt_val + rs_val;
+
+	uint8_t function = 0x20;
+	uint32_t instruction = make_cmd_R_TYPE(0, 0, rd, rt, rs, 0b100001);
+
+	m1 -> write_32b(0, instruction);
+
+	tick(p);
+
+	uint64_t result = p -> get_register_32b_unsigned(rd);
+	if (result != expected)
+		error_exit("ADDU: result is %08x, expected %08x", result, expected);
+
+	if (p -> get_PC() != 4)
+		error_exit("ADDU: expected PC to be 0x4, is %08x\n", p -> get_PC());
+
+	test_no_exception(p);
 
 	free_system(mb, m1, m2, m3, p);
 }
@@ -946,6 +1018,8 @@ void test_AND()
 	if (result != expected)
 		error_exit("AND: result is %016llx, expected %016llx", result, expected);
 
+	test_no_exception(p);
+
 	free_system(mb, m1, m2, m3, p);
 }
 
@@ -986,6 +1060,8 @@ void test_OR()
 	uint64_t result = p -> get_register_64b_unsigned(rd);
 	if (result != expected)
 		error_exit("OR: result is %016llx, expected %016llx", result, expected);
+
+	test_no_exception(p);
 
 	free_system(mb, m1, m2, m3, p);
 }
@@ -1061,6 +1137,8 @@ void test_NOP()
 
 	delete reg_copy;
 
+	test_no_exception(p);
+
 	free_system(mb, m1, m2, m3, p);
 }
 
@@ -1134,6 +1212,8 @@ void test_Bxx(std::string which, uint8_t function, uint8_t rs, uint8_t rt, uint6
 			error_exit("%s with branch (pos/likely): delay slot did not change rs", which.c_str());
 	}
 
+	test_no_exception(p);
+
 	// DO branch negative offset
 	dolog(" > DO branch");
 	p -> reset();
@@ -1158,6 +1238,8 @@ void test_Bxx(std::string which, uint8_t function, uint8_t rs, uint8_t rt, uint6
 
 	if (p -> get_PC() != expected_pc)
 		error_exit("%s with branch (neg): expected %016llx, got %016llx", which.c_str(), expected_pc, p -> get_PC());
+
+	test_no_exception(p);
 
 	// DON'T branch
 	dolog(" > DON'T branch");
@@ -1199,6 +1281,8 @@ void test_Bxx(std::string which, uint8_t function, uint8_t rs, uint8_t rt, uint6
 		if (p -> get_register_64b_unsigned(rt) != rt_NM)
 			error_exit("%s without branch (pos/likely): delay slot executed?", which.c_str());
 	}
+
+	test_no_exception(p);
 
 	free_system(mb, m1, m2, m3, p);
 }
@@ -1295,6 +1379,10 @@ void test_ADDI()
 	if (p -> get_PC() != 0x80000080)
 		error_exit("ADDI: expected exception, expected PC: 0x80000080, PC is: %016llx", p -> get_PC());
 
+	uint32_t sr = p -> get_SR();
+	if (sr != 0xfffffffc)
+		error_exit("ADDI: expected SR: 0x80000080, SR is: %08llx", p -> get_SR());
+
 	free_system(mb, m1, m2, m3, p);
 }
 
@@ -1335,6 +1423,8 @@ void test_SLT()
 	uint64_t result = p -> get_register_64b_signed(rd);
 	if (result != expected)
 		error_exit("SLT: result is %016llx, expected %016llx", result, expected);
+
+	test_no_exception(p);
 }
 
 void test_LB()
@@ -1377,6 +1467,8 @@ void test_LB()
 		uint64_t expected = addr_val;
 		if (temp_64b != expected)
 			error_exit("LB: rt (%08x) != %08x", temp_64b, expected);
+
+		test_no_exception(p);
 	}
 
 	// signed offset
@@ -1413,6 +1505,54 @@ void test_LB()
 		uint64_t expected = addr_val;
 		if (temp_64b != expected)
 			error_exit("LB: rt (%016llx) != %016llx", temp_64b, expected);
+
+		test_no_exception(p);
+	}
+
+	free_system(mb, m1, m2, m3, p);
+}
+
+void test_LBU()
+{
+	dolog(" + test_LBU");
+	memory_bus *mb = NULL;
+	memory *m1 = NULL, *m2 = NULL, *m3 = NULL;
+	processor *p = NULL;
+	create_system(&mb, &m1, &m2, &m3, &p);
+
+	{
+		p -> reset();
+		p -> set_PC(0);
+
+		uint8_t base = 1;
+		uint64_t base_val = 0x1234;
+		p -> set_register_32b(base, base_val);
+
+		uint8_t rt = 2;
+		uint64_t rt_val = TEST_VAL_2;
+		p -> set_register_32b(rt, rt_val);
+
+		int16_t offset = 0x0876;
+
+		uint8_t function = 0b100100;	// LBU
+
+		uint32_t instr = make_cmd_I_TYPE(base, rt, function, offset);
+		m1 -> write_32b(0, instr);
+		// printf("instruction: %08x\n", instr);
+
+		uint8_t addr_val = 0x80;
+		uint64_t addr = base_val + offset;
+		m1 -> write_8b(addr, addr_val);
+
+		tick(p);
+
+		uint32_t temp_32b = p -> get_register_32b_unsigned(rt);
+
+		uint32_t expected = addr_val;
+		if (temp_32b != expected)
+			error_exit("LBU: rt (%08x) != %08x", temp_32b, expected);
+
+		test_no_exception(p);
 	}
 
 	free_system(mb, m1, m2, m3, p);
@@ -1449,6 +1589,8 @@ void test_J_JAL(bool is_JAL)
 
 	tick(p);
 
+	test_no_exception(p);
+
 	if (is_JAL)
 	{
 		uint64_t expected_return_address = 0x08;
@@ -1479,6 +1621,8 @@ void test_J_JAL(bool is_JAL)
 			error_exit("JAL: expected return address %016llx, got %016llx", expected_return_address, p -> get_register_64b_unsigned(31));
 	}
 
+	test_no_exception(p);
+
 	free_system(mb, m1, m2, m3, p);
 }
 
@@ -1498,6 +1642,7 @@ int main(int argc, char *argv[])
 
 	test_ADDI();
 	test_ADDIU();
+	test_ADDU();
 	test_AND();
 	test_ANDI();
 	test_Bxx("BEQ", 0x04, 1, 2, 0x1234, 0x1234, 0x1000, 0x2000, false);
@@ -1511,6 +1656,7 @@ int main(int argc, char *argv[])
 	test_J_JAL(false);
 	test_J_JAL(true);
 	test_LB();
+	test_LBU();
 	test_LUI();
 	test_LW();
 	test_NOP();

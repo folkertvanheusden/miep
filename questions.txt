@@ -1,10 +1,11 @@
 - SLTI/ADDI/ORI/etc	rs is signed?
 - SLTIU/ADDIU/etc	rs is signed?
 * they can be either sign-extended or the compare is unsigned
-
-- if a 32bit action is performed, what happens to the upper 32 bit of a register? unchanged? sign extended? set to 0?
+==> they're sign extended
+- if a 32bit action is performed, what happens to the upper 32 bit of a register? unchanged? sign extended? set to 0? ==> undefined, he manual for the PS2's CPU - the R5900 - says that 32-bit operations are sign-extended to 64-bit
 > this is applicable for e.g. AND: an ADD has a DADD counter part which AND does not seem to have
 
 - delay slot: next instruction (the delay slot) is always executed, even when the jump is not executed?
-
+==> yes
 - how does a mips react when there's nothing mapped in a memory range and data is read from/written to it?
+(nothing to a virtual address: TLB miss exception / nothing physical; bus error)
